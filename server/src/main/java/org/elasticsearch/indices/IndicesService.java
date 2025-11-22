@@ -106,6 +106,7 @@ import org.elasticsearch.index.engine.ThreadPoolMergeExecutorService;
 import org.elasticsearch.index.fielddata.IndexFieldDataCache;
 import org.elasticsearch.index.flush.FlushStats;
 import org.elasticsearch.index.get.GetStats;
+import org.elasticsearch.index.mapper.DocumentMapper;
 import org.elasticsearch.index.mapper.IdFieldMapper;
 import org.elasticsearch.index.mapper.MapperMetrics;
 import org.elasticsearch.index.mapper.MapperRegistry;
@@ -916,7 +917,12 @@ public class IndicesService extends AbstractLifecycleComponent
             mergeMetrics
         );
         pluginsService.forEach(p -> p.onIndexModule(indexModule));
-        return indexModule.newIndexMapperService(clusterService, parserConfig, mapperRegistry, scriptService);
+        final var existingIndexService = indexService(indexMetadata.getIndex());
+        DocumentMapper mapper = null;
+        if (existingIndexService != null && existingIndexService.mapperService() != null) {
+            mapper = existingIndexService.mapperService().documentMapper();
+        }
+        return indexModule.newIndexMapperService(clusterService, parserConfig, mapperRegistry, scriptService, mapper);
     }
 
     /**
